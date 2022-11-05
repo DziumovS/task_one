@@ -102,14 +102,13 @@ def add_author():
 #   ПО ЖЕЛАНИЮ НО НЕОБХОДИМО ХОТЯ БЫ ОДНО:
 #      new_name (строковое значение) -- новое имя, которое будет присвоено автору
 #      new_surname (строковое значение) -- новая фамилия, которая будет присвоена автору
-#      join_book_id (числовое значение) - id книги, автором которой будет числится указанный автор
-#      split_book_id (числовое значение) -- id книги, автором которой перестанет числится указанный автор
+#      join_book_id (числовое значение) - список [] с id книг, автором которых будет числится указанный автор
+#      split_book_id (числовое значение) -- список [] id книг, автором которых перестанет числится указанный автор
 #   если автор с заданным id не существует - вернет 400 ошибку,
 #   если книги в параметре join_book_id не существует или эта книга уже связана с автором - вернет 403 ошибку,
 #   если книга в параметре split_book_id не связана с указанным автором - вернет 403 ошибку,
 #   в случае успешного выполнения запроса будет возвращен JSON с актуальной информацией об указанном авторе и
 #       список связанных с ним книг.
-### В идеале еще добавить поддержку списка id авторов, вместо одного.
 @app.route("/api/author/<int:author_id>", methods=['PUT'])
 def author_update(author_id):
     with connection.cursor() as cursor:
@@ -147,16 +146,21 @@ def author_update(author_id):
             cursor.execute(f"""UPDATE authors SET {sqlreq}updated_at = NOW() WHERE id = {author_id};""")
 
         if 'join_book_id' in data:
-            if int(data['join_book_id']) not in temp_book and int(data['join_book_id']) in temp_books:
-                cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
-                    VALUES ('{author_id}', '{data['join_book_id']}');""")
-            else:
-                return abort(403)
+            book_to_add = {book_id for book_id in data['join_book_id']}
+            for book in book_to_add:
+                if book not in temp_book and book in temp_books:
+                    cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
+                        VALUES ('{author_id}', '{book}');""")
+                else:
+                    return abort(403)
         if 'split_book_id' in data:
-            if int(data['split_book_id']) in temp_book:
-                cursor.execute(f"""DELETE FROM author_books WHERE book_id = {data['split_book_id']};""")
-            else:
-                return abort(403)
+            book_to_remove = {book_id for book_id in data['split_book_id']}
+            for book in book_to_remove:
+                if book in temp_book:
+                    cursor.execute(f"""DELETE FROM author_books
+                        WHERE book_id = '{book}' AND author_id = {author_id};""")
+                else:
+                    return abort(403)
         connection.commit()
 
         author = {}
@@ -377,14 +381,13 @@ def add_book():
 #      book_id (числовое значение) -- id книги,
 #   ПО ЖЕЛАНИЮ НО НЕОБХОДИМО ХОТЯ БЫ ОДНО:
 #      new_name (строковое значение) -- новое имя, которое будет присвоено книге
-#      join_author_id (числовое значение) - id автора, который будет связан с книгой
-#      split_author_id (числовое значение) -- id автора, который перестанет числится автором данной книги
+#      join_author_id (числовое значение) - список [] с id авторов, которые будут связаны с книгой
+#      split_author_id (числовое значение) -- список [] с id авторов, которые перестанут числится авторами данной книги
 #   если книга с заданным id не существует - вернет 400 ошибку,
-#   если автора в параметре join_book_id не существует или этот автор уже связан с книгой - вернет 403 ошибку,
+#   если автор в параметре join_book_id не существует или этот автор уже связан с книгой - вернет 403 ошибку,
 #   если автор в параметре split_book_id не связан с указанной книгой - вернет 403 ошибку,
 #   в случае успешного выполнения запроса будет возвращен JSON с актуальной информацией об указанной книге и
 #       список связанных с ней авторов.
-### В идеале еще добавить поддержку списка id авторов, вместо одного.
 @app.route("/api/book/<int:book_id>", methods=['PUT'])
 def book_update(book_id):
     with connection.cursor() as cursor:
@@ -418,16 +421,20 @@ def book_update(book_id):
             cursor.execute(f"""UPDATE books SET {sqlreq}updated_at = NOW() WHERE id = {book_id};""")
 
         if 'join_author_id' in data:
-            if int(data['join_author_id']) not in temp_authors and int(data['join_author_id']) in all_authors:
-                cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
-                    VALUES ('{data['join_author_id']}', '{book_id}');""")
-            else:
-                return abort(403)
+            author_to_add = {author_id for author_id in data['join_author_id']}
+            for author in author_to_add:
+                if author not in temp_authors and author in all_authors:
+                    cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
+                        VALUES ('{author}', '{book_id}');""")
+                else:
+                    return abort(403)
         if 'split_author_id' in data:
-            if int(data['split_author_id']) in temp_authors:
-                cursor.execute(f"""DELETE FROM author_books WHERE author_id = {data['split_author_id']};""")
-            else:
-                return abort(403)
+            author_to_remove = {author_id for author_id in data['split_author_id']}
+            for author in author_to_remove:
+                if author in temp_authors:
+                    cursor.execute(f"""DELETE FROM author_books WHERE author_id = {author} AND book_id = {book_id};""")
+                else:
+                    return abort(403)
         connection.commit()
 
         book = {}
