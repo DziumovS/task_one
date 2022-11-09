@@ -53,7 +53,7 @@ def list_of_authors():
             ORDER BY id LIMIT {per_page} OFFSET {(page*per_page)-per_page};""")
         data = {row[0]: row[1] + ' ' + row[2] for row in cursor.fetchall()}
 
-        result = {'support_info': info, 'data_info': data}
+        result = {'pagination': info, 'data_info': data}
         return jsonify(result)
 
 
@@ -69,10 +69,10 @@ def add_author():
         404 ошибка == если автор с указанным именем и фамилией уже существует
         400 ошибка == если обязательные параметры не указаны
     """
+    data = request.get_json()
+    if 'name' not in data or 'surname' not in data:
+        return abort(400)
     with connection.cursor() as cursor:
-        data = request.get_json() or {}
-        if 'name' not in data or 'surname' not in data:
-            return abort(400)
         cursor.execute("SELECT name, surname FROM authors;")
         for row in cursor.fetchall():
             if row[0] == data['name'].capitalize() and row[1] == data['surname'].capitalize():
@@ -108,8 +108,10 @@ def author_update(author_id):
         403 ошибка == если id книг в join_book_id не существует или одна из этих книг уже связана с автором ИЛИ;
                       если одна из id книг в split_book_id не связана с указанным автором
     """
+    data = request.get_json()
+    if len(data) == 0:
+        return abort(404)
     with connection.cursor() as cursor:
-        data = request.get_json() or {}
         cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM authors WHERE id = {author_id});""")
         if not cursor.fetchone()[0]:
             return abort(404)
@@ -234,7 +236,7 @@ def authors_book_list(author_id):
             ORDER BY id LIMIT {per_page} OFFSET {(page*per_page)-per_page};""")
         authors_book = {row[0]: row[1] for row in cursor.fetchall()}
 
-        result = {'support_info': info, 'data_info': authors_book}
+        result = {'pagination': info, 'data_info': authors_book}
         return jsonify(result)
 
 
@@ -285,7 +287,7 @@ def list_of_book():
         cursor.execute(f"SELECT id, name FROM books ORDER BY id LIMIT {per_page} OFFSET {(page*per_page)-per_page};")
         data = {row[0]: row[1] for row in cursor.fetchall()}
 
-        result = {'support_info': info, 'data_info': data}
+        result = {'pagination': info, 'data_info': data}
         return jsonify(result)
 
 
@@ -301,10 +303,10 @@ def add_book():
         404 ошибка == если name или author_id отсутствует
         400 ошибка == если список authors_id пуст или некорректно указан (например id автора не существует)
     """
+    data = request.get_json()
+    if 'name' not in data or 'authors_id' not in data:
+        return abort(404)
     with connection.cursor() as cursor:
-        data = request.get_json() or {}
-        if 'name' not in data or 'authors_id' not in data:
-            return abort(404)
         cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE name ILIKE '{data['name']}');""")
         if cursor.fetchone()[0]:
             return abort(400)
@@ -359,8 +361,10 @@ def book_update(book_id):
         403 ошибка == если автор в параметре join_book_id не существует или этот автор уже связан с книгой
         403 ошибка == если автор в параметре split_book_id не связан с указанной книгой
     """
+    data = request.get_json()
+    if len(data) == 0:
+        return abort(404)
     with connection.cursor() as cursor:
-        data = request.get_json() or {}
         cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE id = {book_id});""")
         if not cursor.fetchone()[0]:
             return abort(404)
