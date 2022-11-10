@@ -72,18 +72,19 @@ def add_author():
     data = request.get_json()
     if 'name' not in data or 'surname' not in data:
         return abort(400)
+    name, surname = data['name'].capitalize(), data['surname'].capitalize()
+
     with connection.cursor() as cursor:
-        cursor.execute("SELECT name, surname FROM authors;")
-        for row in cursor.fetchall():
-            if row[0] == data['name'].capitalize() and row[1] == data['surname'].capitalize():
-                return abort(404)
+        cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM authors
+            WHERE name ILIKE '{name}' AND surname ILIKE '{surname}');""")
+        if cursor.fetchone()[0]:
+            return abort(404)
 
         cursor.execute(f"""INSERT INTO authors (name, surname, created_at)
-            VALUES ('{data['name'].capitalize()}', '{data['surname'].capitalize()}', NOW())
-            RETURNING id, name, surname, created_at;""")
+            VALUES ('{name}', '{surname}', NOW()) RETURNING id, created_at;""")
         connection.commit()
         temp = cursor.fetchall()[0]
-        author = {'added_author': {'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3]}}
+        author = {'added_author': {'id': temp[0], 'name': name, 'surname': surname, 'created_at': temp[1]}}
 
         response = jsonify(author)
         response.status_code = 201
@@ -100,64 +101,63 @@ def author_update(author_id):
     Params:
         new_name: str, optional == новое имя, которое будет присвоено автору
         new_surname: str, optional == новая фамилия, которая будет присвоена автору
-        join_author_id: list, optional == список с id (id = int) книг, автором которых будет числится указанный автор
-        split_author_id: list, optional == список с id (id = int) книг, автором которых перестанет быть указанный автор
+        join_book_id: list, optional == список с id (id = int) книг, автором которых будет числится указанный автор
+        split_book_id: list, optional == список с id (id = int) книг, автором которых перестанет быть указанный автор
     Returns:
         JSON с актуальной информацией об авторе и список связанных с ним книг == в случае успешного выполнения запроса
-        404 ошибка == если автора с author_id не существует
+        404 ошибка == если автора с author_id не существует и если нет никаких данных на обновление
         403 ошибка == если id книг в join_book_id не существует или одна из этих книг уже связана с автором ИЛИ;
                       если одна из id книг в split_book_id не связана с указанным автором
     """
     data = request.get_json()
     if len(data) == 0:
         return abort(404)
+
     with connection.cursor() as cursor:
         cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM authors WHERE id = {author_id});""")
         if not cursor.fetchone()[0]:
             return abort(404)
 
-        cursor.execute(f"""SELECT * FROM authors WHERE id = {author_id};""")
+        if 'new_name' in data:
+            sqlreq = f"name = '{data['new_name'].capitalize()}', "
+        if 'new_surname' in data:
+            sqlreq += f"surname = '{data['new_surname'].capitalize()}', "
+        cursor.execute(f"""UPDATE authors SET {sqlreq}updated_at = NOW() WHERE id = {author_id}
+            RETURNING id, name, surname, created_at, updated_at;""")
         temp = cursor.fetchall()[0]
         author = {'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3], 'updated_at': temp[4]}
 
-        cursor.execute(f"""SELECT books.id, books.name FROM books
-            INNER JOIN author_books ON books.id = author_books.book_id
-            INNER JOIN authors ON authors.id = author_books.author_id AND author_id = {author_id};""")
-        author_books = {row[0]: row[1] for row in cursor.fetchall()}
-
-        cursor.execute(f"""SELECT id, name FROM books;""")
-        all_books = {row[0]: row[1] for row in cursor.fetchall()}
-
-        flag = False
-        if 'new_name' in data and data['new_name'].capitalize() != author['name']:
-            sqlreq = f"name = '{data['new_name'].capitalize()}', "
-            flag = True
-        if 'new_surname' in data and data['new_surname'].capitalize() != author['surname']:
-            sqlreq += f"surname = '{data['new_surname'].capitalize()}', "
-            flag = True
-        if flag:
-            cursor.execute(f"""UPDATE authors SET {sqlreq}updated_at = NOW() WHERE id = {author_id}
-            RETURNING name, surname, updated_at;""")
-            temp_2 = cursor.fetchall()[0]
-            author = {'name': temp_2[0], 'surname': temp_2[1], 'updated_at': temp_2[2]}
-
         if 'join_book_id' in data:
             for book in {book_id for book_id in data['join_book_id']}:
-                if book not in author_books and book in all_books:
-                    cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
-                        VALUES ('{author_id}', '{book}');""")
-                    author_books[book] = all_books[book]
-                else:
+                cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books
+                    INNER JOIN author_books ON books.id = author_books.book_id
+                    INNER JOIN authors ON authors.id = author_books.author_id
+                    AND author_id = {author_id} AND book_id = {book});""")
+                if cursor.fetchone()[0]:
                     return abort(403)
+                cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE id = {book});""")
+                if not cursor.fetchone()[0]:
+                    return abort(403)
+                cursor.execute(f"""INSERT INTO author_books (author_id, book_id)
+                    VALUES ('{author_id}', '{book}');""")
+        connection.commit()
+
         if 'split_book_id' in data:
             for book in {book_id for book_id in data['split_book_id']}:
-                if book in author_books:
-                    cursor.execute(f"""DELETE FROM author_books
-                        WHERE book_id = '{book}' AND author_id = {author_id};""")
-                    del author_books[book]
-                else:
+                cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books
+                    INNER JOIN author_books ON books.id = author_books.book_id
+                    INNER JOIN authors ON authors.id = author_books.author_id
+                    AND author_id = {author_id} AND book_id = {book});""")
+                if not cursor.fetchone()[0]:
                     return abort(403)
+                cursor.execute(f"""DELETE FROM author_books
+                    WHERE book_id = {book} AND author_id = {author_id};""")
         connection.commit()
+
+        cursor.execute(f"""SELECT books.id, books.name FROM books
+                INNER JOIN author_books ON books.id = author_books.book_id
+                INNER JOIN authors ON authors.id = author_books.author_id AND author_id = {author_id};""")
+        author_books = {row[0]: row[1] for row in cursor.fetchall()}
 
         result = {'author_info': author, 'author_books': author_books}
         return jsonify(result)
@@ -306,26 +306,27 @@ def add_book():
     data = request.get_json()
     if 'name' not in data or 'authors_id' not in data:
         return abort(404)
+    name = data['name']
+
     with connection.cursor() as cursor:
-        cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE name ILIKE '{data['name']}');""")
+        cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE name ILIKE '{name}');""")
         if cursor.fetchone()[0]:
             return abort(400)
 
-        cursor.execute("SELECT id FROM authors;")
-        temp = [row[0] for row in cursor.fetchall()]
-        authors_ids = {author_id for author_id in data['authors_id'] if author_id in temp}
-        if len(authors_ids) != len(data['authors_id']):
-            return abort(400)
+        authors_ids = set()
+        for author_id in data['authors_id']:
+            cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM authors WHERE id = {author_id});""")
+            if cursor.fetchone()[0]:
+                authors_ids.add(author_id)
+            else:
+                return abort(400)
 
-        cursor.execute(f"""INSERT INTO books (name, created_at) VALUES ('{data['name']}', NOW())
+        cursor.execute(f"""INSERT INTO books (name, created_at) VALUES ('{name}', NOW())
             RETURNING id, name, created_at, updated_at;""")
         temp_2 = cursor.fetchall()[0]
-        book = {
-            'book_info':
-                {
-                    'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]
-                    },
-                'author_info (id)': {}
+        book = {'book_info': {
+            'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]},
+            'author_info (id)': {}
         }
 
         for author_id in authors_ids:
@@ -357,13 +358,14 @@ def book_update(book_id):
         split_author_id: list, optional == список с id (id = int) авторов, которые перестанут числится авторами книги
     Returns:
         JSON с актуальной информацией об указанной книге и её авторами == в случае успешного выполнения запроса
-        404 ошибка == если книга с указанным id не существует
+        404 ошибка == если книга с указанным id не существует и если нет никаких данных на обновление
         403 ошибка == если автор в параметре join_book_id не существует или этот автор уже связан с книгой
         403 ошибка == если автор в параметре split_book_id не связан с указанной книгой
     """
     data = request.get_json()
     if len(data) == 0:
         return abort(404)
+
     with connection.cursor() as cursor:
         cursor.execute(f"""SELECT EXISTS (SELECT 1 FROM books WHERE id = {book_id});""")
         if not cursor.fetchone()[0]:
