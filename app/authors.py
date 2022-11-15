@@ -138,10 +138,8 @@ def author_update(author_id):
             cursor.execute(f"""SELECT count(*) FROM books WHERE id = any('{book_ids}');""")
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-
-            book_ids = [[i] for i in book_ids]
             cursor.executemany(f"""INSERT INTO author_books (author_id, book_id)
-                VALUES ('{author_id}', %s);""", book_ids)
+                VALUES ('{author_id}', %s);""", [[i] for i in book_ids])
 
         if 'split_book_id' in data:
             book_ids = {book_id for book_id in data['split_book_id']}

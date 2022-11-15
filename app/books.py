@@ -149,15 +149,14 @@ def book_update(book_id):
             cursor.execute(f"""SELECT count(*) FROM authors WHERE id = any('{authors_ids}');""")
             if cursor.fetchone()[0] != len(authors_ids):
                 return abort(403)
-            authors_ids = [[i] for i in authors_ids]
             cursor.executemany(f"""INSERT INTO author_books (book_id, author_id)
-                VALUES ('{book_id}', %s);""", authors_ids)
+                VALUES ('{book_id}', %s);""", [[i] for i in authors_ids])
 
         if 'split_author_id' in data:
             authors_ids = {author_id for author_id in data['split_author_id']}
             cursor.execute(f"""SELECT count(*) FROM author_books
                 WHERE book_id = {book_id} AND author_id = any('{authors_ids}');""")
-            if cursor.fetchone()[0] == len(authors_ids):
+            if cursor.fetchone()[0] != len(authors_ids):
                 return abort(403)
             cursor.execute(f"""DELETE FROM author_books
                 WHERE book_id = {book_id} AND author_id = any('{authors_ids}');""")
