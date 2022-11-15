@@ -145,7 +145,7 @@ def author_update(author_id):
             book_ids = {book_id for book_id in data['split_book_id']}
             cursor.execute(f"""SELECT count(*) FROM author_books
                 WHERE author_id = {author_id} AND book_id = any('{book_ids}');""")
-            if cursor.fetchone()[0] == len(book_ids):
+            if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
             cursor.execute(f"""DELETE FROM author_books
                 WHERE author_id = {author_id} AND book_id = any('{book_ids}');""")
