@@ -84,16 +84,15 @@ def add_book():
         if cursor.fetchone()[0] != len(authors_ids):
             return abort(403)
 
-        cursor.execute(f"""INSERT INTO books (name, created_at) VALUES ('{name}', NOW())
-            RETURNING id, name, created_at, updated_at;""")
+        cursor.execute(f"""WITH book AS (INSERT INTO books (name, created_at) VALUES ('{name}', NOW())
+            RETURNING id, name, created_at, updated_at),
+            authors_update AS (UPDATE authors SET updated_at = NOW() WHERE id = any('{authors_ids}'))
+            SELECT id, name, created_at, updated_at FROM book;""")
         temp_2 = cursor.fetchall()[0]
         book = {'book_info': {'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]}}
 
-        cursor.execute(f"""UPDATE authors SET updated_at = NOW() WHERE id = any('{authors_ids}');""")
-
-        authors_ids = [[i] for i in authors_ids]
         cursor.executemany(f"""INSERT INTO author_books (book_id, author_id)
-            VALUES ('{temp_2[0]}', %s);""", authors_ids)
+            VALUES ('{temp_2[0]}', %s);""", [str(i) for i in authors_ids])
         connection.commit()
 
         cursor.execute(f"""SELECT authors.id, authors.name, authors.surname FROM authors
@@ -136,8 +135,8 @@ def book_update(book_id):
         sqlreq = " "
         if 'new_name' in data:
             sqlreq += f"name = '{data['new_name']}', "
-        cursor.execute(f"""UPDATE books SET{sqlreq}updated_at = NOW()
-            WHERE id = {book_id} RETURNING id, name, created_at, updated_at;""")
+        cursor.execute(f"""UPDATE books SET{sqlreq}updated_at = NOW() WHERE id = {book_id}
+            RETURNING id, name, created_at, updated_at;""")
         temp = cursor.fetchall()[0]
         book = {'book_info': {'id': temp[0], 'name': temp[1], 'created_at': temp[2], 'updated_at': temp[3]}}
 
@@ -152,7 +151,7 @@ def book_update(book_id):
                 return abort(403)
             authors_ids = [[i] for i in authors_ids]
             cursor.executemany(f"""INSERT INTO author_books (book_id, author_id)
-                            VALUES ('{book_id}', %s);""", authors_ids)
+                VALUES ('{book_id}', %s);""", authors_ids)
 
         if 'split_author_id' in data:
             authors_ids = {author_id for author_id in data['split_author_id']}
