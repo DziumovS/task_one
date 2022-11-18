@@ -84,10 +84,7 @@ def add_book():
         if cursor.fetchone()[0] != len(authors_ids):
             return abort(403)
 
-        cursor.execute(f"""WITH book AS (INSERT INTO books (name, created_at) VALUES ('{name}', NOW())
-            RETURNING id, name, created_at, updated_at),
-            authors_update AS (UPDATE authors SET updated_at = NOW() WHERE id = any('{authors_ids}'))
-            SELECT id, name, created_at, updated_at FROM book;""")
+        cursor.execute(with_as_books_routes(book_name=name, authors_ids_array=authors_ids))
         temp_2 = cursor.fetchall()[0]
         book = {'book_info': {'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]}}
 

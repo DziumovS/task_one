@@ -175,13 +175,7 @@ def author_delete(author_id):
 
         deleted_info = {'deleted_books {id: name}': {}}
 
-        cursor.execute(f"""WITH books_to_delete AS (
-            SELECT book_id FROM author_books WHERE book_id IN
-            (SELECT book_id FROM author_books GROUP BY book_id HAVING COUNT(*) = 1) AND author_id = {author_id}
-            ), author_delete AS (DELETE FROM authors WHERE id = {author_id} RETURNING id, name, surname
-            ), books_delete AS (DELETE FROM books WHERE id IN (SELECT book_id FROM books_to_delete) RETURNING id, name
-            ) SELECT id, name, surname AS table_1 FROM author_delete
-            UNION SELECT id, name, NULL AS table_2 FROM books_delete ORDER BY table_1;""")
+        cursor.execute(with_as_authors_routes(author_id=author_id))
         for row in cursor.fetchall():
             if 'deleted_author' not in deleted_info:
                 deleted_info['deleted_author'] = {'id': row[0], 'name': row[1], 'surname': row[2]}
