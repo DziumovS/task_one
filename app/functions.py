@@ -1,11 +1,11 @@
-def is_exists(table: str, id: int=None, name: str=None, surname: str=None):
+def is_exists(table: str=None, id: bool=True, name: bool=False, surname: bool=False):
     sql_request = f"""SELECT EXISTS (SELECT 1 FROM {table} WHERE"""
     if id:
-        sql_request += f""" id = {id}"""
+        sql_request += f""" id = %s"""
     if name:
-        sql_request += f""" name ILIKE '{name}' """
+        sql_request += f""" name ILIKE %s """
         if surname:
-            sql_request += f"""AND surname ILIKE '{surname}'"""
+            sql_request += f"""AND surname ILIKE %s"""
     sql_request += """);"""
     return sql_request
 

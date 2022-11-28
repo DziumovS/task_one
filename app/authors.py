@@ -16,7 +16,7 @@ def author_info(author_id):
         404 ошибка == если автор с указанным id не существует
     """
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('authors', id=author_id))
+        cursor.execute(is_exists(table='authors'), (str(author_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
@@ -75,7 +75,7 @@ def add_author():
     name, surname = data['name'].capitalize(), data['surname'].capitalize()
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists(table='authors', name=name, surname=surname))
+        cursor.execute(is_exists(table='authors', id=False, name=True, surname=True), [name, surname])
         if cursor.fetchone()[0]:
             return abort(404)
 
@@ -113,7 +113,7 @@ def author_update(author_id):
         return abort(404)
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('authors', id=author_id))
+        cursor.execute(is_exists(table='authors'), (str(author_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
@@ -169,7 +169,7 @@ def author_delete(author_id):
         404 ошибка == если автор с указанным author_id не существует
     """
     with connection.cursor() as cursor:
-        cursor.execute(is_exists(table='authors', id=author_id))
+        cursor.execute(is_exists(table='authors'), (str(author_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
@@ -200,7 +200,7 @@ def authors_book_list(author_id):
         404 ошибка == если автор с указанным author_id не существует
     """
     with connection.cursor() as cursor:
-        cursor.execute(is_exists(table='authors', id=author_id))
+        cursor.execute(is_exists(table='authors'), (str(author_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 

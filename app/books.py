@@ -16,7 +16,7 @@ def book_info(book_id):
         404 ошибка == если книга с указанным id не существует
     """
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('books', id=book_id))
+        cursor.execute(is_exists(table='books'), (str(book_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
@@ -75,7 +75,7 @@ def add_book():
     name = data['name']
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('books', name=name))
+        cursor.execute(is_exists(table='books', id=False, name=True), (name, ))
         if cursor.fetchone()[0]:
             return abort(400)
 
@@ -124,7 +124,7 @@ def book_update(book_id):
         return abort(404)
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('books', id=book_id))
+        cursor.execute(is_exists(table='books'), (str(book_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
@@ -178,7 +178,7 @@ def book_delete(book_id):
         404 ошибка == если книга с указанным id не существует
     """
     with connection.cursor() as cursor:
-        cursor.execute(is_exists('books', id=book_id))
+        cursor.execute(is_exists(table='books'), (str(book_id), ))
         if not cursor.fetchone()[0]:
             return abort(404)
 
