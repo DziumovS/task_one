@@ -131,8 +131,7 @@ def book_update(book_id):
         sqlreq = " "
         if 'new_name' in data:
             sqlreq += f"name = '{data['new_name']}', "
-        cursor.execute(update_data(table='books', sqlreq=sqlreq, id=book_id,
-                                   returning='id, name, created_at, updated_at'))
+        cursor.execute(update_data(table='books', sqlreq=sqlreq), (str(book_id), ))
         temp = cursor.fetchall()[0]
         book = {'book_info': {'id': temp[0], 'name': temp[1], 'created_at': temp[2], 'updated_at': temp[3]}}
 

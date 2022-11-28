@@ -122,8 +122,7 @@ def author_update(author_id):
             sqlreq += f"name = '{data['new_name'].capitalize()}', "
         if 'new_surname' in data:
             sqlreq += f"surname = '{data['new_surname'].capitalize()}', "
-        cursor.execute(update_data(table='authors', sqlreq=sqlreq, id=author_id,
-                                   returning='id, name, surname, created_at, updated_at'))
+        cursor.execute(update_data(table='authors', sqlreq=sqlreq), (str(author_id), ))
         temp = cursor.fetchall()[0]
         author = {'author_info': {
             'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3], 'updated_at': temp[4]}}

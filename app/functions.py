@@ -43,8 +43,11 @@ def delete_from(table: str, fields: str=None, returning: str=None):
     return sql_request
 
 
-def update_data(table: str, sqlreq: str=None, id: int=None, returning: str=None):
-    sql_request = f"""UPDATE {table} SET{sqlreq}updated_at = NOW() WHERE id = {id} RETURNING {returning};"""
+def update_data(table: str, sqlreq: str=None):
+    sql_request = f"""UPDATE {table} SET{sqlreq}updated_at = NOW() WHERE id = %s RETURNING id, name,"""
+    if table == 'authors':
+        sql_request += """ surname,"""
+    sql_request += """ created_at, updated_at;"""
     return sql_request
 
 
