@@ -51,20 +51,20 @@ def update_data(table: str, sqlreq: str=None):
     return sql_request
 
 
-def with_as_authors_routes(author_id: int):
+def with_as_authors_routes():
     sql_request = f"""WITH books_to_delete AS (
             SELECT book_id FROM author_books WHERE book_id IN
-            (SELECT book_id FROM author_books GROUP BY book_id HAVING COUNT(*) = 1) AND author_id = {author_id}
-            ), author_delete AS (DELETE FROM authors WHERE id = {author_id} RETURNING id, name, surname
+            (SELECT book_id FROM author_books GROUP BY book_id HAVING COUNT(*) = 1) AND author_id = %s
+            ), author_delete AS (DELETE FROM authors WHERE id = %s RETURNING id, name, surname
             ), books_delete AS (DELETE FROM books WHERE id IN (SELECT book_id FROM books_to_delete) RETURNING id, name
             ) SELECT id, name, surname AS table_1 FROM author_delete
             UNION SELECT id, name, NULL AS table_2 FROM books_delete ORDER BY table_1;"""
     return sql_request
 
 
-def with_as_books_routes(book_name: str=None, authors_ids_array: dict|set|tuple=None):
-    sql_request = f"""WITH book AS (INSERT INTO books (name, created_at) VALUES ('{book_name}', NOW())
+def with_as_books_routes():
+    sql_request = f"""WITH book AS (INSERT INTO books (name, created_at) VALUES (%s, NOW())
             RETURNING id, name, created_at, updated_at),
-            authors_update AS (UPDATE authors SET updated_at = NOW() WHERE id = any('{authors_ids_array}'))
+            authors_update AS (UPDATE authors SET updated_at = NOW() WHERE id = any(%s))
             SELECT id, name, created_at, updated_at FROM book;"""
     return sql_request

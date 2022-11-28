@@ -174,7 +174,7 @@ def author_delete(author_id):
 
         deleted_info = {'deleted_books {id: name}': {}}
 
-        cursor.execute(with_as_authors_routes(author_id=author_id))
+        cursor.execute(with_as_authors_routes(), (str(author_id), str(author_id)))
         for row in cursor.fetchall():
             if 'deleted_author' not in deleted_info:
                 deleted_info['deleted_author'] = {'id': row[0], 'name': row[1], 'surname': row[2]}

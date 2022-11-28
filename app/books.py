@@ -84,7 +84,7 @@ def add_book():
         if cursor.fetchone()[0] != len(authors_ids):
             return abort(403)
 
-        cursor.execute(with_as_books_routes(book_name=name, authors_ids_array=authors_ids))
+        cursor.execute(with_as_books_routes(), (name, [author_id for author_id in authors_ids]))
         temp_2 = cursor.fetchall()[0]
         book = {'book_info': {'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]}}
 
