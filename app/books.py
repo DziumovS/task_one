@@ -154,8 +154,7 @@ def book_update(book_id):
                                            conditions=f"book_id = {book_id} AND author_id = any('{authors_ids}')"))
             if cursor.fetchone()[0] != len(authors_ids):
                 return abort(403)
-            cursor.execute(delete_from(table='author_books',
-                                       fields=f"book_id = {book_id} AND author_id = any('{authors_ids}')"))
+            cursor.execute(delete_from(table='author_books', route='b'), (str(book_id), [a_id for a_id in authors_ids]))
         connection.commit()
 
         cursor.execute(count_or_select(table='authors', fields='authors.id, authors.name, authors.surname',
@@ -181,7 +180,7 @@ def book_delete(book_id):
         if not cursor.fetchone()[0]:
             return abort(404)
 
-        cursor.execute(delete_from(table='books', fields=f"id = {book_id}", returning='id, name, created_at'))
+        cursor.execute(delete_from(table='books'), (str(book_id), ))
         temp = cursor.fetchall()[0]
         deleted_book = {'deleted_book': {'id': temp[0], 'name': temp[1], 'created_at': temp[2]}}
         connection.commit()

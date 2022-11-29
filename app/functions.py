@@ -35,11 +35,14 @@ def insert_into(table: str, fields: str=None, values: str=None, returning: str=N
     return sql_request
 
 
-def delete_from(table: str, fields: str=None, returning: str=None):
-    sql_request = f"""DELETE FROM {table} WHERE {fields}"""
-    if returning:
-        sql_request += f""" RETURNING {returning}"""
-    sql_request += """;"""
+def delete_from(table: str=None, route: str=None):
+    sql_request = f"""DELETE FROM {table} WHERE"""
+    if route == 'a':
+        sql_request += """ author_id = %s AND book_id = any(%s);"""
+    if route == 'b':
+        sql_request += """ book_id = %s AND author_id = any(%s);"""
+    if table == "books":
+        sql_request += """ id = %s RETURNING id, name, created_at;"""
     return sql_request
 
 

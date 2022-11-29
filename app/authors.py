@@ -31,7 +31,7 @@ def author_info(author_id):
         return jsonify(result)
 
 
-@bp.route("/author/", methods=['GET'])
+@bp.route("/author", methods=['GET'])
 def list_of_authors():
     """
     Возвращает информацию об имеющихся авторах, с возможностью пагинации
@@ -145,8 +145,7 @@ def author_update(author_id):
                                            conditions=f"author_id = {author_id} AND book_id = any('{book_ids}')"))
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-            cursor.execute(delete_from(table='author_books',
-                                       fields=f"author_id = {author_id} AND book_id = any('{book_ids}')"))
+            cursor.execute(delete_from(table='author_books', route='a'), (str(author_id), [book for book in book_ids]))
         connection.commit()
 
         cursor.execute(count_or_select(table='books', fields='books.id, books.name',
