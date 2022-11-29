@@ -1,6 +1,6 @@
-def is_exists(table: str=None, id: bool=True, name: bool=False, surname: bool=False):
+def is_exists(table: str = None, i_d: bool = True, name: bool = False, surname: bool = False):
     sql_request = f"""SELECT EXISTS (SELECT 1 FROM {table} WHERE"""
-    if id:
+    if i_d:
         sql_request += f""" id = %s"""
     if name:
         sql_request += f""" name ILIKE %s """
@@ -27,15 +27,18 @@ def count_or_select(table: str, inner_join: str=None, fields: str=None, limit: i
     return sql_request
 
 
-def insert_into(table: str, fields: str=None, values: str=None, returning: str=None):
-    sql_request = f"""INSERT INTO {table} ({fields}) VALUES {values}"""
-    if returning:
-        sql_request += f""" RETURNING {returning}"""
-    sql_request += """;"""
+def insert_into(table: str = None, route: str = None):
+    sql_request = f"""INSERT INTO {table} ("""
+    if route == 'a':
+        sql_request += """author_id, book_id) VALUES ({}, %s);"""
+    if route == 'b':
+        sql_request += """book_id, author_id) VALUES ({}, %s);"""
+    if table == 'authors':
+        sql_request += """name, surname, created_at) VALUES (%s, %s, NOW()) RETURNING id, created_at;"""
     return sql_request
 
 
-def delete_from(table: str=None, route: str=None):
+def delete_from(table: str = None, route: str = None):
     sql_request = f"""DELETE FROM {table} WHERE"""
     if route == 'a':
         sql_request += """ author_id = %s AND book_id = any(%s);"""
@@ -46,8 +49,8 @@ def delete_from(table: str=None, route: str=None):
     return sql_request
 
 
-def update_data(table: str, sqlreq: str=None):
-    sql_request = f"""UPDATE {table} SET{sqlreq}updated_at = NOW() WHERE id = %s RETURNING id, name,"""
+def update_data(table: str, sql_req: str = None):
+    sql_request = f"""UPDATE {table} SET{sql_req}updated_at = NOW() WHERE id = %s RETURNING id, name,"""
     if table == 'authors':
         sql_request += """ surname,"""
     sql_request += """ created_at, updated_at;"""

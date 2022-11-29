@@ -75,12 +75,11 @@ def add_author():
     name, surname = data['name'].capitalize(), data['surname'].capitalize()
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists(table='authors', id=False, name=True, surname=True), [name, surname])
+        cursor.execute(is_exists(table='authors', i_d=False, name=True, surname=True), [name, surname])
         if cursor.fetchone()[0]:
             return abort(404)
 
-        cursor.execute(insert_into(table='authors', fields='name, surname, created_at',
-                                   values=f"('{name}', '{surname}', NOW())", returning='id, created_at'))
+        cursor.execute(insert_into(table='authors'), (name, surname))
         connection.commit()
         temp = cursor.fetchall()[0]
         author = {'added_author': {'id': temp[0], 'name': name, 'surname': surname, 'created_at': temp[1]}}
@@ -105,7 +104,7 @@ def author_update(author_id):
     Returns:
         JSON с актуальной информацией об авторе и список связанных с ним книг == в случае успешного выполнения запроса
         404 ошибка == если автора с author_id не существует и если нет никаких данных на обновление
-        403 ошибка == если id книг в join_book_id не существует или одна из этих книг уже связана с автором ИЛИ;
+        403 ошибка == если id книг в join_book_id не существует или одна из этих книг уже связана с автором ЛИБО
                       если одна из id книг в split_book_id не связана с указанным автором
     """
     data = request.get_json()
@@ -122,7 +121,7 @@ def author_update(author_id):
             sqlreq += f"name = '{data['new_name'].capitalize()}', "
         if 'new_surname' in data:
             sqlreq += f"surname = '{data['new_surname'].capitalize()}', "
-        cursor.execute(update_data(table='authors', sqlreq=sqlreq), (str(author_id), ))
+        cursor.execute(update_data(table='authors', sql_req=sqlreq), (str(author_id), ))
         temp = cursor.fetchall()[0]
         author = {'author_info': {
             'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3], 'updated_at': temp[4]}}
@@ -136,8 +135,7 @@ def author_update(author_id):
             cursor.execute(count_or_select(table='books', fields='count(*)', conditions=f"id = any('{book_ids}')"))
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-            cursor.executemany(insert_into(table='author_books', fields='author_id, book_id',
-                                           values=f"('{author_id}', %s)"), [[i] for i in book_ids])
+            cursor.executemany(insert_into(table='author_books', route='a').format(author_id), [[i] for i in book_ids])
 
         if 'split_book_id' in data:
             book_ids = {book_id for book_id in data['split_book_id']}
