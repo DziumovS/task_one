@@ -1,28 +1,38 @@
-def is_exists(table: str = None, i_d: bool = True, name: bool = False, surname: bool = False):
+def is_exists(table: str = None, _id: bool = True, name: bool = False, surname: bool = False):
     sql_request = f"""SELECT EXISTS (SELECT 1 FROM {table} WHERE"""
-    if i_d:
-        sql_request += f""" id = %s"""
+    if _id:
+        sql_request += """ id = %s"""
     if name:
-        sql_request += f""" name ILIKE %s """
+        sql_request += """ name ILIKE %s """
         if surname:
-            sql_request += f"""AND surname ILIKE %s"""
+            sql_request += """AND surname ILIKE %s"""
     sql_request += """);"""
     return sql_request
 
 
-def count_or_select(table: str, inner_join: str=None, fields: str=None, limit: int=None, offset: int=None,
-                    conditions: str=None, id: int=None):
+def count_or_select(table: str = None, inner_join: str = None, fields: str = None, limit: int = None,
+                    offset: int = None, _id: str = None):
     sql_request = f"""SELECT {fields} FROM {table}"""
     if inner_join == 'author':
-        sql_request += f""" INNER JOIN author_books ON authors.id = author_books.author_id
-                            INNER JOIN books ON books.id = author_books.book_id AND book_id = {id}"""
+        sql_request += """ INNER JOIN author_books ON authors.id = author_books.author_id
+                            INNER JOIN books ON books.id = author_books.book_id AND book_id = %s"""
     if inner_join == 'book':
-        sql_request += f""" INNER JOIN author_books ON books.id = author_books.book_id
-                            INNER JOIN authors ON authors.id = author_books.author_id AND author_id = {id}"""
+        sql_request += """ INNER JOIN author_books ON books.id = author_books.book_id
+                            INNER JOIN authors ON authors.id = author_books.author_id AND author_id = %s"""
     if limit or offset:
         sql_request += f""" ORDER BY id LIMIT {limit} OFFSET {offset}"""
-    if conditions:
-        sql_request += f""" WHERE {conditions}"""
+
+    if _id == 'i':
+        sql_request += """ WHERE id = %s"""
+    if _id == 'a':
+        sql_request += """ WHERE author_id = %s"""
+    if _id == 'any':
+        sql_request += """ WHERE id = any(%s)"""
+    if _id == 'ab':
+        sql_request += """ WHERE author_id = %s AND book_id = any(%s)"""
+    if _id == 'ba':
+        sql_request += """ WHERE book_id = %s AND author_id = any(%s)"""
+
     sql_request += """;"""
     return sql_request
 
@@ -58,7 +68,7 @@ def update_data(table: str, sql_req: str = None):
 
 
 def with_as_authors_routes():
-    sql_request = f"""WITH books_to_delete AS (
+    sql_request = """WITH books_to_delete AS (
             SELECT book_id FROM author_books WHERE book_id IN
             (SELECT book_id FROM author_books GROUP BY book_id HAVING COUNT(*) = 1) AND author_id = %s
             ), author_delete AS (DELETE FROM authors WHERE id = %s RETURNING id, name, surname
@@ -69,7 +79,7 @@ def with_as_authors_routes():
 
 
 def with_as_books_routes():
-    sql_request = f"""WITH book AS (INSERT INTO books (name, created_at) VALUES (%s, NOW())
+    sql_request = """WITH book AS (INSERT INTO books (name, created_at) VALUES (%s, NOW())
             RETURNING id, name, created_at, updated_at),
             authors_update AS (UPDATE authors SET updated_at = NOW() WHERE id = any(%s))
             SELECT id, name, created_at, updated_at FROM book;"""

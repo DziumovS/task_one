@@ -20,12 +20,12 @@ def author_info(author_id):
         if not cursor.fetchone()[0]:
             return abort(404)
 
-        cursor.execute(count_or_select(table='authors', fields='*', conditions=f'id = {author_id}'))
+        cursor.execute(count_or_select(table='authors', fields='*', _id='i'), (str(author_id), ))
         temp = cursor.fetchall()[0]
         author = {'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3], 'updated_at': temp[4]}
 
-        cursor.execute(count_or_select(table='books', fields='books.id, books.name',
-                                       inner_join='book', id=author_id))
+        cursor.execute(count_or_select(table='books', fields='books.id, books.name', inner_join='book'),
+                       (str(author_id), ))
         author_books = {row[0]: row[1] for row in cursor.fetchall()}
         result = {'author_info': author, 'author_books': author_books}
         return jsonify(result)
@@ -75,7 +75,7 @@ def add_author():
     name, surname = data['name'].capitalize(), data['surname'].capitalize()
 
     with connection.cursor() as cursor:
-        cursor.execute(is_exists(table='authors', i_d=False, name=True, surname=True), [name, surname])
+        cursor.execute(is_exists(table='authors', _id=False, name=True, surname=True), [name, surname])
         if cursor.fetchone()[0]:
             return abort(404)
 
@@ -116,38 +116,39 @@ def author_update(author_id):
         if not cursor.fetchone()[0]:
             return abort(404)
 
-        sqlreq = " "
+        sql_req = " "
         if 'new_name' in data:
-            sqlreq += f"name = '{data['new_name'].capitalize()}', "
+            sql_req += f"name = '{data['new_name'].capitalize()}', "
         if 'new_surname' in data:
-            sqlreq += f"surname = '{data['new_surname'].capitalize()}', "
-        cursor.execute(update_data(table='authors', sql_req=sqlreq), (str(author_id), ))
+            sql_req += f"surname = '{data['new_surname'].capitalize()}', "
+        cursor.execute(update_data(table='authors', sql_req=sql_req), (str(author_id), ))
         temp = cursor.fetchall()[0]
         author = {'author_info': {
             'id': temp[0], 'name': temp[1], 'surname': temp[2], 'created_at': temp[3], 'updated_at': temp[4]}}
 
         if 'join_book_id' in data:
             book_ids = {book_id for book_id in data['join_book_id']}
-            cursor.execute(count_or_select(table='author_books', fields='count(*)',
-                                           conditions=f"author_id = {author_id} AND book_id = any('{book_ids}')"))
+            cursor.execute(count_or_select(table='author_books', fields='count(*)', _id='ab'),
+                           (str(author_id), [b_id for b_id in book_ids]))
             if cursor.fetchone()[0] == len(book_ids):
                 return abort(403)
-            cursor.execute(count_or_select(table='books', fields='count(*)', conditions=f"id = any('{book_ids}')"))
+            cursor.execute(count_or_select(table='books', fields='count(*)', _id='any'), ([b_id for b_id in book_ids],))
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-            cursor.executemany(insert_into(table='author_books', route='a').format(author_id), [[i] for i in book_ids])
+            cursor.executemany(insert_into(table='author_books', route='a').format(author_id),
+                               [[b_id] for b_id in book_ids])
 
         if 'split_book_id' in data:
             book_ids = {book_id for book_id in data['split_book_id']}
-            cursor.execute(count_or_select(table='author_books', fields='count(*)',
-                                           conditions=f"author_id = {author_id} AND book_id = any('{book_ids}')"))
+            cursor.execute(count_or_select(table='author_books', fields='count(*)', _id='ab'),
+                           (str(author_id), [b_id for b_id in book_ids]))
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-            cursor.execute(delete_from(table='author_books', route='a'), (str(author_id), [book for book in book_ids]))
+            cursor.execute(delete_from(table='author_books', route='a'), (str(author_id), [b_id for b_id in book_ids]))
         connection.commit()
 
-        cursor.execute(count_or_select(table='books', fields='books.id, books.name',
-                                       inner_join='book', id=author_id))
+        cursor.execute(count_or_select(table='books', fields='books.id, books.name', inner_join='book'),
+                       (str(author_id), ))
         author_books = {row[0]: row[1] for row in cursor.fetchall()}
 
         author['author_books'] = author_books
@@ -204,13 +205,12 @@ def authors_book_list(author_id):
         per_page = min(request.args.get('per_page', 5, type=int), 10)
         offset = page * per_page - per_page
 
-        cursor.execute(
-            count_or_select(table='author_books', fields='count(book_id)', conditions=f'author_id = {author_id}'))
+        cursor.execute(count_or_select(table='author_books', fields='count(book_id)', _id='a'), (str(author_id), ))
         data_count = cursor.fetchall()[0][0]
         info = {'books_count': data_count, 'total_pages': ceil(data_count / per_page), 'current_page': page}
 
-        cursor.execute(count_or_select(table='books', fields='books.id, books.name',
-                                       inner_join='book', id=author_id, limit=per_page, offset=offset))
+        cursor.execute(count_or_select(table='books', fields='books.id, books.name', inner_join='book', limit=per_page,
+                       offset=offset), (str(author_id), ))
         authors_book = {row[0]: row[1] for row in cursor.fetchall()}
 
         result = {'pagination': info, 'data_info': authors_book}
