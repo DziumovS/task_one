@@ -135,8 +135,7 @@ def author_update(author_id):
             cursor.execute(count_or_select(table='books', fields='count(*)', _id='any'), ([b_id for b_id in book_ids],))
             if cursor.fetchone()[0] != len(book_ids):
                 return abort(403)
-            cursor.executemany(insert_into(table='author_books', route='a').format(author_id),
-                               [[b_id] for b_id in book_ids])
+            cursor.executemany(insert_into(table='author_books', route='a'), [(author_id, b_id) for b_id in book_ids])
 
         if 'split_book_id' in data:
             book_ids = {book_id for book_id in data['split_book_id']}

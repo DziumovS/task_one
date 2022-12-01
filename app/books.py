@@ -89,8 +89,7 @@ def add_book():
         temp_2 = cursor.fetchall()[0]
         book = {'book_info': {'id': temp_2[0], 'name': temp_2[1], 'created_at': temp_2[2], 'updated_at': temp_2[3]}}
 
-        cursor.executemany(insert_into(table='author_books', route='b').format(temp_2[0]),
-                           [[a_id] for a_id in authors_ids])
+        cursor.executemany(insert_into(table='author_books', route='b'), [(temp_2[0], a_id) for a_id in authors_ids])
         connection.commit()
 
         cursor.execute(count_or_select(table='authors', fields='authors.id, authors.name, authors.surname',
@@ -147,8 +146,7 @@ def book_update(book_id):
                            ([a_id for a_id in authors_ids], ))
             if cursor.fetchone()[0] != len(authors_ids):
                 return abort(403)
-            cursor.executemany(insert_into(table='author_books', route='b').format(book_id),
-                               [[a_id] for a_id in authors_ids])
+            cursor.executemany(insert_into(table='author_books', route='b'), [(book_id, a_id) for a_id in authors_ids])
 
         if 'split_author_id' in data:
             authors_ids = {author_id for author_id in data['split_author_id']}

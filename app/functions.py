@@ -40,9 +40,9 @@ def count_or_select(table: str = None, inner_join: str = None, fields: str = Non
 def insert_into(table: str = None, route: str = None):
     sql_request = f"""INSERT INTO {table} ("""
     if route == 'a':
-        sql_request += """author_id, book_id) VALUES ({}, %s);"""
+        sql_request += """author_id, book_id) VALUES (%s, %s);"""
     if route == 'b':
-        sql_request += """book_id, author_id) VALUES ({}, %s);"""
+        sql_request += """book_id, author_id) VALUES (%s, %s);"""
     if table == 'authors':
         sql_request += """name, surname, created_at) VALUES (%s, %s, NOW()) RETURNING id, created_at;"""
     return sql_request
