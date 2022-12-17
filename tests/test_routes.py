@@ -1,16 +1,26 @@
 import pytest
 
 
-class TestRoutesWithGETMethod:
+def test_id_exists_11(client, drop_tables):
+    url = "api/author/11"
+    response = client.get(url)
+    assert response.status_code == 200
 
-    def test_post(self, client):
-        url = "api/author"
-        data = {
-            "name": "Name56",
-            "surname": "Surname56"
-        }
-        response = client.post(url, json=data)
-        assert response.status_code == 201
+
+def test_id_exists_7(client, drop_tables):
+    url = "api/author/7"
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+def test_post(client):
+    url = "api/author"
+    data = {
+        "name": "Name58",
+        "surname": "Surname58"
+    }
+    response = client.post(url, json=data)
+    assert response.status_code == 201
 
     # @pytest.mark.parametrize("_id, page, per_page", [('', '', ''),
     #                                                  ('', '?page=2', ''),
@@ -64,4 +74,3 @@ class TestRoutesWithGETMethod:
 # id // None
 # page // None
 # per_page // None
-#

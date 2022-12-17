@@ -4,33 +4,21 @@ create tables with columns
 
 from yoyo import step
 
+
 __depends__ = {}
 
-steps = [
-    step(
-        """CREATE TABLE authors(
-            id serial PRIMARY KEY,
-            name text NOT NULL,
-            surname text NOT NULL,
-            created_at timestamptz,
-            updated_at timestamptz);
-        """,
-        """DROP TABLE author_books CASCADE;"""),
-    step(
-        """CREATE TABLE books(
-            id serial PRIMARY KEY,
-            name text UNIQUE NOT NULL,
-            created_at timestamptz,
-            updated_at timestamptz);
-        """,
-        """DROP TABLE books CASCADE;"""),
-    step(
-        """CREATE TABLE author_books(
-            author_id int REFERENCES authors (id) ON DELETE CASCADE,
-            book_id int REFERENCES books (id) ON DELETE CASCADE);
-        """,
-        """DROP TABLE authors CASCADE;"""),
-    step(
-        """CREATE UNIQUE INDEX idx_authors_name_surname ON authors (name, surname);
-        """)
-]
+steps = [step("""CREATE TABLE IF NOT EXISTS authors(
+    id serial PRIMARY KEY,
+    name text NOT NULL,
+    surname text NOT NULL,
+    created_at timestamptz,
+    updated_at timestamptz);
+    CREATE TABLE IF NOT EXISTS books(
+    id serial PRIMARY KEY,
+    name text UNIQUE NOT NULL,
+    created_at timestamptz,
+    updated_at timestamptz);
+    CREATE TABLE IF NOT EXISTS author_books(
+    author_id int REFERENCES authors (id) ON DELETE CASCADE,
+    book_id int REFERENCES books (id) ON DELETE CASCADE);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_authors_name_surname ON authors (name, surname);""")]
