@@ -1,5 +1,5 @@
 from flask import jsonify, request, abort, url_for
-from config import connection
+from settings.main import connection
 from math import ceil
 from app import bp
 from app.functions import *
@@ -182,7 +182,7 @@ def author_delete(author_id):
         return jsonify(deleted_info)
 
 
-@bp.route("/author/books/<int:author_id>/", methods=['GET'])
+@bp.route("/author/books/<int:author_id>", methods=['GET'])
 def authors_book_list(author_id):
     """
     Возвращает информацию о книгах указанного автора с возможностью пагинации
