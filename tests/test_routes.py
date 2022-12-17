@@ -1,26 +1,39 @@
 import pytest
 
 
-def test_id_exists_11(client, drop_tables):
-    url = "api/author/11"
+@pytest.mark.parametrize("_id", [11, 'cat', 777])
+def test_id_exists_11(client, drop_tables, _id):
+    url = "api/author/" + str(_id)
     response = client.get(url)
-    assert response.status_code == 200
+    if _id == 11:
+        assert response.status_code == 200
+        assert response.json
+        assert len(response.json) != 0
+        assert len(response.json['author_info']) != 0
+        assert len(response.json['author_info']['name']) != 0
+        assert len(response.json['author_info']['surname']) != 0
+        assert len(response.json['author_info']['created_at']) != 0
+        assert response.json['author_info']['id'] == _id
+        assert len(response.json['author_books']) == 2
+    else:
+        assert response.status_code == 404
 
 
-def test_id_exists_7(client, drop_tables):
-    url = "api/author/7"
-    response = client.get(url)
-    assert response.status_code == 200
 
-
-def test_post(client):
-    url = "api/author"
-    data = {
-        "name": "Name58",
-        "surname": "Surname58"
-    }
-    response = client.post(url, json=data)
-    assert response.status_code == 201
+# def test_id_exists_7(client, drop_tables):
+#     url = "api/author/7"
+#     response = client.get(url)
+#     assert response.status_code == 200
+#
+#
+# def test_post(client):
+#     url = "api/author"
+#     data = {
+#         "name": "Name58",
+#         "surname": "Surname58"
+#     }
+#     response = client.post(url, json=data)
+#     assert response.status_code == 201
 
     # @pytest.mark.parametrize("_id, page, per_page", [('', '', ''),
     #                                                  ('', '?page=2', ''),

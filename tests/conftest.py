@@ -71,9 +71,9 @@ def create_tables():
                     INSERT INTO author_books (author_id, book_id) VALUES ('2', '8');
                     INSERT INTO author_books (author_id, book_id) VALUES ('4', '8');
                     INSERT INTO author_books (author_id, book_id) VALUES ('3', '11');
-                    INSERT INTO author_books (author_id, book_id) VALUES ('3', '12');
+                    INSERT INTO author_books (author_id, book_id) VALUES ('11', '12');
                     INSERT INTO author_books (author_id, book_id) VALUES ('3', '10');
-                    INSERT INTO author_books (author_id, book_id) VALUES ('2', '10');
+                    INSERT INTO author_books (author_id, book_id) VALUES ('11', '10');
                     INSERT INTO author_books (author_id, book_id) VALUES ('1', '11');""")
     connection.commit()
 
