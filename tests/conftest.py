@@ -19,7 +19,7 @@ def runner(app):
     return app.test_cli_runner()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def create_tables():
     cursor = connection.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS authors(
