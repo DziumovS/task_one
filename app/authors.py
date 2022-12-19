@@ -70,7 +70,7 @@ def add_author():
         400 ошибка == если обязательные параметры не указаны
     """
     data = request.get_json()
-    if 'name' not in data or 'surname' not in data:
+    if 'name' not in data or not data['name'] or 'surname' not in data or not data['surname']:
         return abort(400)
     name, surname = data['name'].capitalize(), data['surname'].capitalize()
 

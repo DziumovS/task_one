@@ -66,11 +66,11 @@ def add_book():
         authors_id: list, must_have == id (id = int) авторов этой книги
     Returns:
         JSON с данными о созданной книге и её авторами == в случае успешного выполнения запроса
-        404 ошибка == если name или author_id отсутствует
+        404 ошибка == если name или authors_id отсутствует
         400 ошибка == если список authors_id пуст или некорректно указан (например id автора не существует)
     """
     data = request.get_json()
-    if 'name' not in data or 'authors_id' not in data:
+    if 'name' not in data or not data['name'] or 'authors_id' not in data or not data['authors_id']:
         return abort(404)
     name = data['name']
 
