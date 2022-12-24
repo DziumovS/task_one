@@ -117,9 +117,9 @@ def author_update(author_id):
             return abort(404)
 
         sql_req = " "
-        if 'new_name' in data:
-            sql_req += f"name = '{data['new_name'].capitalize()}', "
-        if 'new_surname' in data:
+        if 'new_name' in data and data['new_name']:
+            sql_req += f" name = '{data['new_name'].capitalize()}', "
+        if 'new_surname' in data and data['new_surname']:
             sql_req += f"surname = '{data['new_surname'].capitalize()}', "
         cursor.execute(update_data(table='authors', sql_req=sql_req), (str(author_id), ))
         temp = cursor.fetchall()[0]
@@ -130,7 +130,7 @@ def author_update(author_id):
             book_ids = {book_id for book_id in data['join_book_id']}
             cursor.execute(count_or_select(table='author_books', fields='count(*)', _id='ab'),
                            (str(author_id), [b_id for b_id in book_ids]))
-            if cursor.fetchone()[0] == len(book_ids):
+            if 0 < cursor.fetchone()[0] <= len(book_ids):
                 return abort(403)
             cursor.execute(count_or_select(table='books', fields='count(*)', _id='any'), ([b_id for b_id in book_ids],))
             if cursor.fetchone()[0] != len(book_ids):

@@ -118,6 +118,7 @@ def book_update(book_id):
         404 ошибка == если книга с указанным id не существует и если нет никаких данных на обновление
         403 ошибка == если автор в параметре join_book_id не существует или уже связан с книгой ЛИБО
                       если автор в параметре split_book_id не связан с указанной книгой
+        400 ошибка == если книга с указанным именем уже существует
     """
     data = request.get_json()
     if len(data) == 0:
@@ -128,20 +129,23 @@ def book_update(book_id):
         if not cursor.fetchone()[0]:
             return abort(404)
 
-        sqlreq = " "
+        book = dict()
         if 'new_name' in data:
-            sqlreq += f"name = '{data['new_name']}', "
-        cursor.execute(update_data(table='books', sql_req=sqlreq), (str(book_id), ))
-        temp = cursor.fetchall()[0]
-        book = {'book_info': {'id': temp[0], 'name': temp[1], 'created_at': temp[2], 'updated_at': temp[3]}}
+            sqlreq = f" name = '{data['new_name']}', "
+            cursor.execute(update_data(table='books', sql_req=sqlreq), (str(book_id), ))
+            temp = cursor.fetchall()
+            if temp:
+                temp = temp[0]
+                book['book_info'] = {'id': temp[0], 'name': temp[1], 'created_at': temp[2], 'updated_at': temp[3]}
+            else:
+                return abort(400)
 
         if 'join_author_id' in data:
             authors_ids = {author_id for author_id in data['join_author_id']}
             cursor.execute(count_or_select(table='author_books', fields='count(*)', _id='ba'),
                            (str(book_id), [a_id for a_id in authors_ids]))
-            if cursor.fetchone()[0] == len(authors_ids):
+            if 0 < cursor.fetchone()[0] <= len(authors_ids):
                 return abort(403)
-
             cursor.execute(count_or_select(table='authors', fields='count(*)', _id='any'),
                            ([a_id for a_id in authors_ids], ))
             if cursor.fetchone()[0] != len(authors_ids):

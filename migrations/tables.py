@@ -20,5 +20,4 @@ steps = [step("""CREATE TABLE IF NOT EXISTS authors(
     updated_at timestamptz);
     CREATE TABLE IF NOT EXISTS author_books(
     author_id int REFERENCES authors (id) ON DELETE CASCADE,
-    book_id int REFERENCES books (id) ON DELETE CASCADE);
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_authors_name_surname ON authors (name, surname);""")]
+    book_id int REFERENCES books (id) ON DELETE CASCADE);""")]

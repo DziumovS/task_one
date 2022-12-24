@@ -60,7 +60,10 @@ def delete_from(table: str = None, route: str = None):
 
 
 def update_data(table: str, sql_req: str = None):
-    sql_request = f"""UPDATE {table} SET{sql_req}updated_at = NOW() WHERE id = %s RETURNING id, name,"""
+    sql_request = f"""UPDATE {table} SET{sql_req}updated_at = NOW() WHERE id = %s"""
+    if table == 'books' and sql_req is not None:
+        sql_request += f""" AND NOT EXISTS (SELECT 1 FROM books WHERE{sql_req})""".replace(', ', '')
+    sql_request += """ RETURNING id, name,"""
     if table == 'authors':
         sql_request += """ surname,"""
     sql_request += """ created_at, updated_at;"""
