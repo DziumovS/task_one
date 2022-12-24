@@ -3,7 +3,7 @@ import pytest
 
 class TestDELETERequests:
     @pytest.mark.parametrize("_id", [11, 7, 'cat', 777])
-    def test_author_delete_request(self, client, create_tables, _id):
+    def test_author_delete_request(self, client, _id):
         url_author = "api/author/" + str(_id)
         response_get = client.get(url_author)
         if _id == 11 or _id == 7:
@@ -31,7 +31,7 @@ class TestDELETERequests:
             assert response_get.status_code == 404
 
     @pytest.mark.parametrize("_id", [11, 7, 'cat', 777])
-    def test_book_delete_request(self, client, create_tables, _id):
+    def test_book_delete_request(self, client, _id):
         url_book = "api/book/" + str(_id)
         response_get = client.get(url_book)
         if _id == 11 or _id == 7:

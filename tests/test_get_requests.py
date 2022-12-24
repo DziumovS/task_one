@@ -3,7 +3,7 @@ import pytest
 
 class TestGETRequests:
     @pytest.mark.parametrize("_id", [11, 7, 'cat', 777])
-    def test_author_get_request(self, client, create_tables, _id):
+    def test_author_get_request(self, client, _id):
         url = "api/author/" + str(_id)
         response = client.get(url)
         if _id == 11:
@@ -22,7 +22,7 @@ class TestGETRequests:
             assert response.status_code == 404
 
     @pytest.mark.parametrize("_id", [11, 9, 'cat', 777])
-    def test_book_get_request(self, client, create_tables, _id):
+    def test_book_get_request(self, client, _id):
         url = "api/book/" + str(_id)
         response = client.get(url)
         if _id == 11:
@@ -44,7 +44,7 @@ class TestGETRequests:
         ('?page=2', ''),
         ('?page=2', '&per_page=2'),
         ('', '?per_page=20')])
-    def test_author_get_request_with_pagination(self, client, create_tables, page, per_page):
+    def test_author_get_request_with_pagination(self, client, page, per_page):
         url = "api/author" + page + per_page
         response = client.get(url)
         assert response.status_code == 200
@@ -62,7 +62,7 @@ class TestGETRequests:
         ('?page=2', ''),
         ('?page=2', '&per_page=2'),
         ('', '?per_page=20')])
-    def test_book_get_request_with_pagination(self, client, create_tables, page, per_page):
+    def test_book_get_request_with_pagination(self, client, page, per_page):
         url = "api/book" + page + per_page
         response = client.get(url)
         assert response.status_code == 200
@@ -92,7 +92,7 @@ class TestGETRequests:
         (777, '?page=2', ''),
         (777, '?page=2', '&per_page=2'),
         (777, '', '?per_page=20')])
-    def test_author_books_get_request_with_pagination(self, client, create_tables, _id, page, per_page):
+    def test_author_books_get_request_with_pagination(self, client, _id, page, per_page):
         url = "api/author/books/" + str(_id) + page + per_page
         response = client.get(url)
         if _id == 11 or _id == 9:

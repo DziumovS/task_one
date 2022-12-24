@@ -15,8 +15,8 @@ class TestPUTRequests:
         (3, 'new_name', 'Testname', 'new_surname', 'Testsurname', 'join_book_id', [1, 2, 12], 'split_book_id',
          [4, 5, 6, 10, 11]),
         (10, 'new_name', 'Testname', 'new_surname', 'Testsurname', 'join_book_id', [4, 5, 12], 'split_book_id', [])])
-    def test_author_put_request(self, client, create_tables, _id, name_key, name_value, surname_key, surname_value,
-                                join_book_key, join_book_value, split_book_key, split_book_value):
+    def test_author_put_request(self, client, _id, name_key, name_value, surname_key, surname_value, join_book_key,
+                                join_book_value, split_book_key, split_book_value):
         url = "api/author/" + str(_id)
         data = {
             name_key: name_value,
@@ -64,8 +64,8 @@ class TestPUTRequests:
         (8, 'new_name', 'book name 1', 'join_author_id', '', 'split_author_id', [3]),
         (2, 'new_name', 'Testname', 'join_author_id', [9, 10, 11, 12], 'split_author_id', [4]),
         (12, 'new_name', 'Testname', 'join_author_id', [5, 6, 7, 8], 'split_author_id', [11])])
-    def test_book_put_request(self, client, create_tables, _id, name_key, name_value, join_author_key,
-                              join_author_value, split_author_key, split_author_value):
+    def test_book_put_request(self, client, _id, name_key, name_value, join_author_key, join_author_value,
+                              split_author_key, split_author_value):
         url = "api/book/" + str(_id)
         data = {
             name_key: name_value,

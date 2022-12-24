@@ -8,7 +8,7 @@ class TestPOSTRequests:
         ('', '', '', ''),
         ('name', 'surname', 'name1', 'surname1'),
         ('name', 'surname', 'testname', 'testsurname')])
-    def test_author_post_request(self, client, create_tables, name_key, surname_key, name_value, surname_value):
+    def test_author_post_request(self, client, name_key, surname_key, name_value, surname_value):
         url = "api/author"
         data = {
             name_key: name_value,
@@ -40,7 +40,7 @@ class TestPOSTRequests:
         ('', '', '', ''),
         ('name', 'authors_id', 'book name 1', [1, 2]),
         ('name', 'authors_id', 'Testname', [1, 2, 12])])
-    def test_book_post_request(self, client, create_tables, name_key, authors_id, name_value, authors_id_value):
+    def test_book_post_request(self, client, name_key, authors_id, name_value, authors_id_value):
         url = "api/book"
         data = {
             name_key: name_value,
