@@ -56,6 +56,6 @@ urllib3==1.26.12
 virtualenv==20.17.1
 virtualenv-clone==0.5.7
 wcwidth==0.2.5
-Werkzeug==2.2.2
+Werkzeug==2.2.3
 yoyo-migrations==8.0.0
 zipp==3.10.0
