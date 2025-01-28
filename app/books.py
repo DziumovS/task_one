@@ -8,12 +8,12 @@ from app.functions import *
 @bp.route("/book/<int:book_id>", methods=['GET'])
 def book_info(book_id):
     """
-    Возвращает информацию о заданной книге включая автора (или авторов) этой книги
+    Returns information about a given book including the author (or authors) of that book
     Args:
-        book_id: int, must_have == id книги
+        book_id: int, must_have == book id
     Returns:
-        JSON с данными об указанной книге и её авторах == в случае успешного выполнения запроса
-        404 ошибка == если книга с указанным id не существует
+        JSON with data about the specified book and its authors == in case of successful execution of the request
+        404 error == if the book with the specified id does not exist
     """
     with connection.cursor() as cursor:
         cursor.execute(is_exists(table='books'), (str(book_id), ))
@@ -34,12 +34,12 @@ def book_info(book_id):
 @bp.route("/book", methods=['GET'])
 def list_of_book():
     """
-    Возвращает информацию об имеющихся книгах, с возможностью пагинации
+    Returns information about available books, with pagination capability
     Params:
-        page: int, optional == номер страницы (по умолчанию = 1)
-        per_page: int, optional == кол-во записей на странице (по умолчанию = 5)
+        page: int, optional == page number (default = 1)
+        per_page: int, optional == number of records per page (default = 5)
     Returns:
-        JSON с данными о книгах == в случае успешного выполнения запроса
+        JSON with data about books == in case of successful execution of the request
     """
     with connection.cursor() as cursor:
         page = request.args.get('page', 1, type=int)
@@ -60,14 +60,14 @@ def list_of_book():
 @bp.route("/book", methods=['POST'])
 def add_book():
     """
-    Создает новую книгу с возможностью сразу привязать её к автору (или авторам)
+    Creates a new book with the ability to immediately link it to an author (or authors)
     Params:
-        name: str, must_have == имя книги
-        authors_id: list, must_have == id (id = int) авторов этой книги
+        name: str, must_have == book name
+        authors_id: list, must_have == id (id = int) of the authors of this book
     Returns:
-        JSON с данными о созданной книге и её авторами == в случае успешного выполнения запроса
-        404 ошибка == если name или authors_id отсутствует
-        400 ошибка == если список authors_id пуст или некорректно указан (например id автора не существует)
+        JSON with data about the created book and its authors == in case of successful execution of the request
+        404 error == if name or authors_id is missing
+        400 error == if authors_id list is empty or incorrectly specified (e.g. author id does not exist)
     """
     data = request.get_json()
     if 'name' not in data or not data['name'] or 'authors_id' not in data or not data['authors_id']:
@@ -106,19 +106,19 @@ def add_book():
 @bp.route("/book/<int:book_id>", methods=['PUT'])
 def book_update(book_id):
     """
-    Редактирует данные указанной книги с возможностью редактирования её автора(ов)
+    Edits the specified book data with the ability to edit its author(s)
     Args:
-        book_id: int, must_have == id книги
+        book_id: int, must_have == book id
     Params:
-        new_name: str, optional == новое имя, которое будет присвоено книге
-        join_author_id: list, optional == список с id (id = int) авторов, которые будут связаны с книгой
-        split_author_id: list, optional == список с id (id = int) авторов, которые перестанут числится авторами книги
+        new_name: str, optional == a new name to be assigned to the book
+        join_author_id: list, optional == list with id (id = int) of authors to be associated with the book
+        split_author_id: list, optional == list with id (id = int) of authors who will no longer be listed as authors of the book
     Returns:
-        JSON с актуальной информацией об указанной книге и её авторами == в случае успешного выполнения запроса
-        404 ошибка == если книга с указанным id не существует и если нет никаких данных на обновление
-        403 ошибка == если автор в параметре join_book_id не существует или уже связан с книгой ЛИБО
-                      если автор в параметре split_book_id не связан с указанной книгой
-        400 ошибка == если книга с указанным именем уже существует
+        JSON with up-to-date information about the specified book and its authors == in case of successful query execution
+        404 error == if the book with the specified id does not exist and if there is no data to update.
+        403 error == if the author in the join_book_id parameter does not exist or is already associated with the book OR
+                     if the author in the split_book_id parameter is not associated with the specified book
+        400 error == if a book with the specified name already exists
     """
     data = request.get_json()
     if len(data) == 0:
@@ -172,12 +172,12 @@ def book_update(book_id):
 @bp.route("/book/<int:book_id>", methods=['DELETE'])
 def book_delete(book_id):
     """
-    Удаляет указанную книгу
+    Deletes the specified book
     Args:
-        book_id: int, must_have == id книги, которая будет удалена
+        book_id: int, must_have == id of the book to be deleted
     Returns:
-        JSON с информацией об удаленной книге == в случае успешного выполнения запроса
-        404 ошибка == если книга с указанным id не существует
+        JSON with information about the deleted book == in case of successful request execution
+        404 error == if the book with the specified id does not exist
     """
     with connection.cursor() as cursor:
         cursor.execute(is_exists(table='books'), (str(book_id), ))
