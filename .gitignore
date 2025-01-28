@@ -35,4 +35,3 @@ nosetests.xml
 .pydevproject
 
 venv
-tests_DELETE_before_PUSH.py

@@ -83,13 +83,13 @@ def runner(app):
 
 @pytest.fixture(scope='session')
 def cursor():
-    """Функция создает подключение к базе данных"""
+    """Creates a connection to the database"""
     return connection.cursor()
 
 
 @pytest.fixture(autouse=True)
 def create_tables(cursor):
-    """Предварительно удаляет таблицы, создает заново, наполняет данными и после теста снова удаляет"""
+    """Deletes tables beforehand, creates them again, fills them with data and deletes them again after the test"""
     cursor.execute(drop_tables_sql_request)
     connection.commit()
     cursor.execute(create_tables_sql_request)
